@@ -47,6 +47,7 @@ public class Demo {
 	
 	public void printDemo(){
 		System.out.println("printDemo:hello world ! my name is lzp");
+		System.out.println(" first name ");
 
 	}
 
