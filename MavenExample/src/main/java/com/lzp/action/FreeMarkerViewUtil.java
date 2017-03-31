@@ -25,6 +25,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.springframework.web.servlet.support.RequestContextUtils;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerView;
 
@@ -51,6 +52,7 @@ import freemarker.template.TemplateException;
  */
 
 public class FreeMarkerViewUtil extends FreeMarkerView {
+	private static Logger log=Logger.getLogger(FreeMarkerViewUtil.class);
     @Override
     protected void doRender(Map<String, Object> model, HttpServletRequest request, HttpServletResponse response)
             throws Exception {
@@ -84,7 +86,7 @@ public class FreeMarkerViewUtil extends FreeMarkerView {
         String requestHTML = this.getRequestHTML(request);
         // 静态页面绝对路径
         String htmlPath = basePath + requestHTML;
-        System.out.println("静态页面绝对路径===========>>:"+htmlPath);
+        logger.info("静态页面绝对路径===========>>:"+htmlPath);
         File htmlFile = new File(htmlPath);
         if (!htmlFile.getParentFile().exists()) {
             htmlFile.getParentFile().mkdirs();

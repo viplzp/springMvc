@@ -48,13 +48,15 @@ import com.lzp.model.User;
 
      @RequestMapping("index1")
      public ModelAndView Add(HttpServletRequest request, HttpServletResponse response) {
-         ModelAndView mav = new ModelAndView("index");
+         ModelAndView mav = new ModelAndView();
+         mav.addObject("title", "网站标题");
          User user = new User();
          user.setUserName("<h2>小明=========================================================></h2>");
          user.setPassWord("<a href='https://www.hao123.com/'>百度</a>");
          List<User> users = new ArrayList<User>();
          users.add(user);
          mav.addObject("users", users);
+         mav.setViewName("index");
          return mav;
      }
 
