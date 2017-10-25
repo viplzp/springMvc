@@ -116,6 +116,11 @@
 			<version>1.7.0</version>
 		</dependency>
 	</dependencies>
+			<dependency>
+		    <groupId>net.alchim31.maven</groupId>
+		    <artifactId>yuicompressor-maven-plugin</artifactId>
+		    <version>1.5.1</version>
+		</dependency>
 
 	<build>
 		<finalName>zan</finalName>
