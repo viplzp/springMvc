@@ -13,12 +13,16 @@
  package com.zbd.test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.alibaba.fastjson.JSONObject;
  /**
@@ -42,8 +46,34 @@ import com.alibaba.fastjson.JSONObject;
 
 public class SysnDpsInfoTest {
 	private static String charset="UTF-8";
-	private static String serverName="http://192.168.1.11";
+	private static String serverName="https://secure.zhubaodai.com";
+//	private static String serverName="http://192.168.1.12";
 	private static final int BUFFER_SIZE = 1024;
+	
+	public  String getPath(){
+		String path=System.getProperty("user.dir")+"\\";
+
+		System.out.println("="+path);
+		return path;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static void main(String[] args) {
+		System.out.println("开始处理！");///
+		SysnDpsInfoTest sb=new SysnDpsInfoTest();
+		String path=sb.getPath();
+		String file=path+"dps.txt";;
+		boolean flg=true;
+		try {
+			String fileStr=getFileStr(file, "UTF-8");
+			String[] ciNos=replaceBlank(fileStr).split(",");
+			SysnDpsInfoTest.updDPSInfo(ciNos,flg);
+		} catch (Exception e) {			
+			e.printStackTrace();
+				
+		}
+
+	}
 
 	/**
 	 * Creates a new instance of SysnDpsInfoTest.
@@ -54,38 +84,54 @@ public class SysnDpsInfoTest {
 		// TODO Auto-generated constructor stub
 
 	}
-	
-	public static void updDPSInfo(String[] ciNos){
+
+	public static void updDPSInfo(String[] ciNos,boolean flg){
 		try {			
 			Map<String,Object>failMap=new HashMap<String, Object>();
 			Map<String,Object>succMap=new HashMap<String, Object>();
 			int index=1;
+			//运算代码
+			long begintime = System.currentTimeMillis();
 			for (String ciNo : ciNos) {
 				String strUrl=serverName+"/member/memberCenter/modifyBankNo.do?cino="+ciNo;
-				String result=sendGet(strUrl, charset);
-				List<Message> listMsg= JSONObject.parseArray(result, Message.class);
-				for (Message msg : listMsg) {
-					Map<String, Object> msgMap = (Map<String,Object>)msg.getMessage();
-					ResponseMsg header = JSONObject.parseObject(msgMap.get("Header").toString(), ResponseMsg.class);
-					String errorMsg=header.getRetMsg();
-					if(MsgConstant.HPSSUCCEED.equals(msg.getMsgCode())){
-						System.out.println(index+"、成功！编号为-"+ciNo+"的返回结果："+errorMsg);
-						succMap.put(ciNo, errorMsg);
-					}else{
-						failMap.put(ciNo, errorMsg);
-						System.out.println(index+"、失败！编号为-"+ciNo+"的返回结果："+errorMsg);
-						
+				long endtime=System.currentTimeMillis();
+				long costTime = (endtime - begintime)/1000;
+				if(flg){
+					String result=sendGet(strUrl, charset);
+					
+					List<Message> listMsg= JSONObject.parseArray(result, Message.class);
+					if(listMsg!=null&&listMsg.size()>0){					
+						for (Message msg : listMsg) {
+							Map<String, Object> msgMap = (Map<String,Object>)msg.getMessage();
+							ResponseMsg header = JSONObject.parseObject(msgMap.get("Header").toString(), ResponseMsg.class);
+							String errorMsg=header.getRetMsg();
+							if(MsgConstant.HPSSUCCEED.equals(msg.getMsgCode())){
+								System.out.println(index+"、成功！编号为-"+ciNo+"的返回结果："+errorMsg+";消耗时间(秒)："+costTime);
+								succMap.put(ciNo, errorMsg);
+							}else{
+								failMap.put(ciNo, errorMsg);
+								System.out.println(index+"、失败！编号为-"+ciNo+"的返回结果："+errorMsg+";消耗时间(秒)："+costTime);
+								
+							}
+							
+						}
 					}
 					
+				}else{
+					sendGetNo(strUrl, charset);
+					System.out.println(index+"、编号为-"+ciNo+";消耗时间(秒)："+costTime);
 				}
 				index++;
+		
+
 			}
 			System.out.println("===============");
 			System.out.println("录入总数："+ciNos.length);
 			System.out.println("成功总数："+succMap.size());
 			System.out.println("失败总数："+failMap.size());
 		} catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
+			System.out.println("异常啊："+e);
 		}
 	}
 	/**
@@ -122,15 +168,58 @@ public class SysnDpsInfoTest {
                httpConn.setRequestProperty("Charset", "utf-8");
                
                httpConn.connect();
-                // 字节流 读取全部内容 包括换行符
                returnStr = inputStreamToString(httpConn.getInputStream(), charset);
+
+                // 字节流 读取全部内容 包括换行符
           } catch (Exception e) {
-                return returnStr;
+        	  return returnStr;
           } finally {
                 if (httpConn != null)
                     httpConn.disconnect();
           }
            return returnStr;
+    }
+	/**
+     * post请求
+     * @param strUrl
+     * @param content
+     * @param charset
+     * @return
+     */
+    public static void sendGetNo(String strUrl, String charset)  {
+          URL httpurl = null;
+          HttpURLConnection httpConn = null;
+          String returnStr = "";
+           try {
+               httpurl = new URL(strUrl);
+               httpConn = (HttpURLConnection) httpurl.openConnection();
+               httpConn.setRequestMethod("GET"); // 默认是post
+                // 设置是否向httpUrlConnection输出，因为这个是post请求，参数要放在 http正文内，因此需要设为true, 默认情况下是false;  
+               httpConn.setDoOutput( false);
+                // 设置是否从httpUrlConnection读入，默认情况下是true;
+               httpConn.setDoInput( true);
+               httpConn.setIfModifiedSince(999999999);
+               httpConn.setRequestProperty( "Content-Type", "text/xml");
+               httpConn.setRequestProperty("User-Agent", "zbd");
+               
+               httpConn
+   					.setRequestProperty(
+   							"Accept",
+   							"image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, application/x-shockwave-flash, application/vnd.ms-powerpoint, application/vnd.ms-excel, application/msword, */*");
+               httpConn.setRequestProperty("Accept-Language", "zh-cn");
+               httpConn.setRequestProperty("UA-CPU", "x86");
+               httpConn.setConnectTimeout(6 * 1000);
+               httpConn.setReadTimeout(6 * 1000);
+               httpConn.setRequestProperty("Charset", "utf-8");
+               
+               httpConn.connect();
+                // 字节流 读取全部内容 包括换行符
+               httpConn.getInputStream();
+          } catch (Exception e) {
+          } finally {
+                if (httpConn != null)
+                    httpConn.disconnect();
+          }
     }
 	/**
      * post请求读取返回值
@@ -148,91 +237,56 @@ public class SysnDpsInfoTest {
        data = null; 
        return new String(outStream.toByteArray(),encoding); 
    } 
-	@SuppressWarnings("unchecked")
-	public static void main(String[] args) {
-		//select '"'||CI_NO||'",' AS CI_NO from DPSFNTACCINFO WHERE  BINDSERIALNO IS NOT NULL AND  VIRECARDNO IS NULL;
-		System.out.println("开始处理！");
-		String[] ciNos={"100000392438",
-				"100000392678",
-				"100000393128",
-				"100000407778",
-				"100000422728",
-				"100000422848",
-				"100000422878",
-				"100000422888",
-				"100000422898",
-				"100000515918",
-				"100000541718",
-				"100000627528",
-				"100000648568",
-				"100000690438",
-				"100001764568",
-				"100001740558",
-				"100001764248",
-				"100001764258",
-				"100001764308",
-				"200000579728",
-				"100001764388",
-				"100001764808",
-				"100001764408",
-				"100001764418",
-				"200001764448",
-				"100001764488",
-				"100000419538",
-				"100001764758",
-				"100001764778",
-				"100001764978",
-				"100001745298",
-				"100001765188",
-				"100001765408",
-				"100001765558",
-				"100001764478",
-				"100001764628",
-				"100001764638",
-				"100001764648",
-				"100001764828",
-				"100001764888",
-				"100001764588",
-				"100001764498",
-				"100001764668",
-				"100001764458",
-				"100001764548",
-				"100001765418",
-				"100000393428",
-				"100000393708",
-				"100000393718",
-				"100000394218",
-				"100000394308",
-				"100000394328",
-				"100000394388",
-				"100000394438",
-				"100000394458",
-				"100000394478",
-				"100000394488",
-				"100000394498",
-				"100000394538",
-				"100000394548",
-				"100001764298",
-				"100001764338",
-				"100001764348",
-				"100001764358",
-				"100000392448",
-				"100000392528",
-				"100000392538",
-				"100000392708",
-				"100000392758",
-				"100000393008",
-				"100001765358",
-				"100001765468",
-				"100001765378",
-				"100000419028",
-				"100000416008",
-				"100000415988",
-				"100000415998",
-				"100000419238",
-				"100000416688"};
-		SysnDpsInfoTest.updDPSInfo(ciNos);
 
+	public static String replaceBlank(String str) {
+		String dest = "";
+		if (str!=null) {
+			Pattern p = Pattern.compile("\\s*|\t|\r|\n");
+			Matcher m = p.matcher(str);
+			dest = m.replaceAll("");
+		}
+		return dest;
+	}
+	/**
+	 * 将文件解析为String
+	 * @param fullPath
+	 * @param encoding
+	 * @return
+	 * @throws Exception
+	 */
+	public static String getFileStr(String fullPath, String encoding) throws Exception{
+		
+		File file = new File(fullPath);
+		if(!file.exists()){
+			throw new Exception("解析文件 [" + fullPath + "] 不存在");
+		}
+		
+		InputStream in = null;
+		ByteArrayOutputStream out = null;
+		try{
+			in = new FileInputStream(file);
+			out = new ByteArrayOutputStream();
+			byte[] buffer = new byte[1024];
+			int r;
+			while((r=in.read(buffer))!=-1){
+				out.write(buffer,0,r);
+				out.flush();
+			}
+			
+			return new String(out.toByteArray(),encoding);
+		}
+		catch(Exception e){
+	//		logger.error("将文件解析为String失败：" + e.getMessage(), e);
+			throw e;
+		}
+		finally{
+			if(in!=null){
+				in.close();
+			}
+			if(out!=null){
+				out.close();
+			}
+		}
 	}
 
 
