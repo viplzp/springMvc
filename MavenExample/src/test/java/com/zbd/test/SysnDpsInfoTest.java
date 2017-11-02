@@ -50,19 +50,13 @@ public class SysnDpsInfoTest {
 //	private static String serverName="http://192.168.1.12";
 	private static final int BUFFER_SIZE = 1024;
 	
-	public  String getPath(){
-		String path=System.getProperty("user.dir")+"\\";
 
-		System.out.println("="+path);
-		return path;
-	}
 	
 	@SuppressWarnings("unchecked")
 	public static void main(String[] args) {
 		System.out.println("开始处理！");///
-		SysnDpsInfoTest sb=new SysnDpsInfoTest();
-		String path=sb.getPath();
-		String file=path+"dps.txt";;
+		String path=System.getProperty("user.dir")+"\\";
+		String file=path+"src\\test\\java\\com\\zbd\\test\\dps.txt";;
 		boolean flg=true;
 		try {
 			String fileStr=getFileStr(file, "UTF-8");
