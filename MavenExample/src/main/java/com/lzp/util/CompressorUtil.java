@@ -44,11 +44,11 @@ import java.util.List;
   */
  public class CompressorUtil {
      private static final String encoding = "utf-8";
-     private static final String[] suffixArray = { ".js", ".css" };
+     private static final String[] suffixArray = { ".js", ".css",".html"};
 
      public static void main(String[] args) {
          String yuiPath = "D:/GIT/zbd-web/target/zbd-web/WEB-INF/lib/yuicompressor-2.4.7.jar";
-         
+//         String filePath = "D:/GIT/zbd/zbd-web/src/main/webapp/public/static/html";
          String filePath = "D:/GIT/zbd/zbd-web/target/zbd-web/public/v2";
 
          compressFile(yuiPath, filePath);

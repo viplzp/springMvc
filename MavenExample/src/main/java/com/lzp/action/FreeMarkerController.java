@@ -13,12 +13,15 @@
  package com.lzp.action;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -74,5 +77,38 @@ import com.lzp.model.User;
          mav.addObject("CREATE_HTML", false);
          return mav;
      }
+     public static void main(String[] args) {
+    	 AntPathMatcher antPathMatcher = new AntPathMatcher();
+    	 String pattern = " / order /ass";
+    	 String path = "/order/list";
+    	 boolean resFlag=antPathMatcher.match(pattern, path);
+//    	 System.out.println(resFlag);
+// 		String[] pattDirs = StringUtils.tokenizeToStringArray(pattern, "/");
+ 		boolean trimTokens = true;
+		boolean ignoreEmptyTokens = true;
+		String delimiters="/";
+		String[] pattDirs =StringUtils.tokenizeToStringArray(pattern, delimiters, trimTokens, ignoreEmptyTokens);
+ 		for (String string : pattDirs) {
+			System.out.println(string+"=");
+		}
+ 		List<String>list=new ArrayList<String>();
+ 		list.add("55");
+ 		list.add("9");
+ 		list.add("158");
+ 		list.add("1");
+ 		Collections.sort(list);
+ 		for (String string : list) {
+ 			System.out.println(string);
+ 		}
+ 		Collections.reverse(list);
+ 		for (String string : list) {
+			System.out.println(string);
+		}
+ 		 String max = Collections.max(list);
+ 		System.out.println(max);
+ 		
+
+		
+	}
  }
 	
