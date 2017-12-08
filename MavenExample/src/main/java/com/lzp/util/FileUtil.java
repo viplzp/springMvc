@@ -1,4 +1,4 @@
-package com.zbd.test;
+package com.lzp.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -27,7 +27,7 @@ public class FileUtil {
 	 * @throws Exception
 	 */
 	public static String getFileStr(String fullPath, String encoding) throws Exception{
-		
+		System.out.println(fullPath);
 		File file = new File(fullPath);
 		if(!file.exists()){
 			throw new Exception("解析文件 [" + fullPath + "] 不存在");

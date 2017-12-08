@@ -59,7 +59,9 @@ public class SysnDpsInfoTest {
 		String file=path+"src\\test\\java\\com\\zbd\\test\\dps.txt";;
 		boolean flg=true;
 		try {
-			String fileStr=getFileStr(file, "UTF-8");
+//			String fileStr=getFileStr(file, "UTF-8");
+			
+			String fileStr = "100002306398";
 			String[] ciNos=replaceBlank(fileStr).split(",");
 			SysnDpsInfoTest.updDPSInfo(ciNos,flg);
 		} catch (Exception e) {			

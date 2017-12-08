@@ -14,12 +14,12 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
+		<!-- <dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-web-api</artifactId>
 			<version>6.0</version>
 			<scope>provided</scope>
-		</dependency>
+		</dependency> -->
 		<dependency>
 			<groupId>commons-fileupload</groupId>
 			<artifactId>commons-fileupload</artifactId>
@@ -120,6 +120,12 @@
 		    <artifactId>yuicompressor-maven-plugin</artifactId>
 		    <version>1.5.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/commons-httpclient/commons-httpclient -->
+<dependency>
+    <groupId>commons-httpclient</groupId>
+    <artifactId>commons-httpclient</artifactId>
+    <version>3.0.1</version>
+</dependency>
 	</dependencies>
 
 	<build>
@@ -200,6 +206,25 @@
 				</plugin>
 			</plugins>
 		</pluginManagement>
+	<resources>
+	        <resource>
+	            <directory>src/main/resources</directory>
+	            <includes>
+	                <include>**/*.properties</include>
+	                <include>**/*.xml</include>
+	                <include>**/*.txt</include>
+	             </includes>
+	            <filtering>false</filtering>
+	        </resource>
+	        <resource>
+	            <directory>src/main/java</directory>
+	            <includes>
+	                <include>**/*.properties</include>
+	                <include>**/*.xml</include>
+	            </includes>
+	            <filtering>false</filtering>
+	        </resource>
+	    </resources>
 	</build>
 
 </project>

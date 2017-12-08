@@ -29,8 +29,11 @@
  * @since JDK 1.6
  */
 package com.lzp.util;
- import java.io.File;
+ import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -45,11 +48,13 @@ import java.util.List;
  public class CompressorUtil {
      private static final String encoding = "utf-8";
      private static final String[] suffixArray = { ".js", ".css",".html"};
+ 	private static final int BUFFER_SIZE = 1024;
+
 
      public static void main(String[] args) {
-         String yuiPath = "D:/GIT/zbd-web/target/zbd-web/WEB-INF/lib/yuicompressor-2.4.7.jar";
+         String yuiPath = "D:/yuicompressor-2.4.7.jar";
 //         String filePath = "D:/GIT/zbd/zbd-web/src/main/webapp/public/static/html";
-         String filePath = "D:/GIT/zbd/zbd-web/target/zbd-web/public/v2";
+         String filePath = "D:/GIT/zbd/zbd-web/src/main/webapp/public/v2/js/platform";
 
          compressFile(yuiPath, filePath);
      }
@@ -80,17 +85,39 @@ import java.util.List;
          for (String cmd : commondList) {
              try {
                  System.out.println(cmd);
-                 runTime.exec(cmd);
+                 Process process = runTime.exec(cmd);
+                 String resStr = inputStreamToString(process.getErrorStream(),"UTF-8");
+                 System.out.println(resStr);
                  count++;
              } catch (IOException e) {
                  e.printStackTrace();
-             }
+                 System.out.println("===");
+             } catch (Exception e) {
+				System.out.println("===");
+				e.printStackTrace();
+					
+			}
          }
          Date endTime = new Date();
          Long cost = endTime.getTime() - startTime.getTime();
          System.out.println("压缩完成，耗时：" + cost + "ms，共压缩文件个数：" + count);
      }
-
+ 	/**
+      * post请求读取返回值
+      * @param InputStream in
+      * @param charset
+      * @return find . -maxdepth 1 -type f | xargs grep -l '0104138'  |xargs grep -n "100000422888"|more
+      */
+     public static String inputStreamToString(InputStream in,String encoding) throws Exception{ 
+        ByteArrayOutputStream outStream = new ByteArrayOutputStream(); 
+        byte[] data = new byte[BUFFER_SIZE]; 
+        int count = -1; 
+        while((count = in.read(data,0, BUFFER_SIZE)) != -1)
+            outStream.write(data, 0, count);
+        in.close();
+        data = null; 
+        return new String(outStream.toByteArray(),encoding); 
+    } 
      /**
       * 初始化压缩命令
       * @param yuiPath
