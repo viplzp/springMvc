@@ -14,9 +14,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -43,26 +45,46 @@ import org.dom4j.DocumentException;
  * @since JDK 1.6
  */
 
-public class VoteLiCui {
+public class VoteLiCui2 {
 	
 	private static String voteUrl="http://vote.yssai.com/vote/vote/workvote?callbackDoVoteHandler=jsonp1512697145066&_=1512697217225&cpid=nxRSlI4&crid=e5cd1ac6de87431d88aa63d2e2827742&cgid=S9gdlI4";
 	private static final int BUFFER_SIZE = 1024;
-	private static String path =  new File(VoteLiCui.class.getResource("/").getPath()).getPath()+File.separatorChar;
+	private static String path =  new File(VoteLiCui2.class.getResource("/").getPath()).getPath()+File.separatorChar;
 //	private static String path = SystemUtils.getUserDir().getPath()+ File.separatorChar;
+	private static String SUCCESS="0";
+	private static String CONN_105="105";//开始链接啦
+	private static String CONN_106="106";//已经连接成功了，请断开后再连
 
 	public static void main(String[] args) {
 		try {
 			String ipstrs = FileUtil.getFileStr(path  + "votelinesip.txt", "gbk");
 			System.out.println(ipstrs);
 			voteTest();
+			String province="";
+//			getLine(province);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 
 		}
-
 	}
-
+	/**
+	 * 
+	 * @param url 请求链接
+	 * @return 返回map结果集
+	 */
+	@SuppressWarnings("unchecked")
+	public static Map<String,String > sendByGet(String url){
+		String lineinfR = RequestUtil.sendGet(url, "utf-8");
+		Map<String, String> rMap = null;
+		try {
+			rMap = XmlUtil.xml2map(lineinfR, false);
+		} catch (DocumentException e) {
+			rMap=new HashMap<String, String>();
+		}
+		System.out.println("该线路连接信息："+rMap.toString());
+		return rMap;
+	}
 	public static void voteTest() throws Exception {
 		int index=0;
 		long startTime=System.currentTimeMillis();
@@ -91,20 +113,45 @@ public class VoteLiCui {
 		System.out.println("linestrs:" + linestrs);
 		System.out.println("ipstrs:" + ipstrs);
 		for (int k = 0; k < 200; k++) {
-			if (lines != null && lines.size() > 0) {
-				for (int i = 0; i < lines.size(); i++) {
-					Map linemap = (Map) lines.get(i);
-					String linename = linemap.get("@name").toString().trim();
-					/*if (linename.indexOf("电信") == -1) {
+//			if (lines != null && lines.size() > 0) {
+//				for (int i = 0; i < lines.size(); i++) {
+//					Map linemap = (Map) lines.get(i);
+//					String linename = linemap.get("@name").toString().trim();
+					//获取线路信息
+//					String lineinfoUrl = "http://127.0.0.1:8222/lineinfo/?linename=" + URLEncoder.encode("全国", "utf-8");
+					String lineinfoUrl = "http://127.0.0.1:8222/hbconnect/?province="+ URLEncoder.encode("全国", "utf-8")+"&linktype=0";
+
+					Map<String, String> lineinfR = sendByGet(lineinfoUrl);
+					if(SUCCESS.equals(lineinfR.get("code"))){
+						//一周内未使用过方可使用
+						if("0".equals(lineinfR.get("weekuse"))){
+							System.out.println("该线路连接信息："+lineinfR);
+							
+						}else {
+							continue;
+						}
+					}else if(CONN_105.equals(lineinfR.get("code"))){
+						System.out.println("105："+lineinfR);
+					}else if(CONN_106.equals(lineinfR.get("code"))){
+						System.out.println("106："+lineinfR);
+					}
+					else{
+						System.out.println("无效线路："+lineinfR);
 						continue;
-					}*/
-					System.out.println("尝试重新切换ip linename:" + linename);
-					String lineurl = "http://127.0.0.1:8222/connect/?linename=" + URLEncoder.encode(linename, "utf-8") + "&linktype=0";
-					String connectR = RequestUtil.sendGet(lineurl, "utf-8");
-					System.out.println("==="+connectR);
+					}
+//					System.out.println("尝试重新切换ip linename:" + linename);
+//					String conectUrl = "http://127.0.0.1:8222/connect/?linename=" + URLEncoder.encode(linename, "utf-8") + "&linktype=0";
+					String conectUrl = "http://127.0.0.1:8222/hbconnect/?province="+ URLEncoder.encode("全国", "utf-8")+"&linktype=0";
+
+					Map<String, String> conectMap = sendByGet(conectUrl);
+					if(SUCCESS.equals(conectMap.get("code"))){
+						System.out.println("已经打开链接："+conectMap);						
+					}else{
+						System.out.println("打开链接情况未确定："+conectMap);
+					}
 					Thread.sleep(300);
 					String stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
-//					System.out.println("stateR:" + stateR);
+					System.out.println("stateR:" + stateR);
 					int cnn = 0;
 					while (stateR.indexOf("已连接") == -1) {
 						Thread.sleep(300);
@@ -220,17 +267,17 @@ public class VoteLiCui {
 							break;
 						}
 					}
-					FileUtil.WriterFileAppend(linename + ";", "D:/hexin/", "votelines2017.txt");
+//					FileUtil.WriterFileAppend(linename + ";", "D:/hexin/", "votelines2017.txt");
 
-				}
+//				}
 				start = start + 20;
 				end = end + 20;
-				lines = getLine(start, end);
-			} else {
-				start = start + 20;
-				end = end + 20;
-				lines = getLine(start, end);
-			}
+////				lines = getLine(start, end);
+//			} else {
+//				start = start + 20;
+//				end = end + 20;
+////				lines = getLine(start, end);
+//			}
 
 		}
 	}
@@ -303,16 +350,52 @@ public class VoteLiCui {
 		Map resultMap = XmlUtil.xml2mapWithAttr(resultXml, true);
 		if (resultMap != null && resultMap.get("root") != null) {
 			Map temp = (Map) resultMap.get("root");
-			if (temp != null) {
-				Map temp2 = (Map) temp.get("lines");
-				if (temp2 != null) {
-					list = (List) temp2.get("line");
+			if (temp != null && temp.size()>0) {
+				System.out.println("结果呢：="+temp+"=");
+//				if("\r\n".equal(string) || "\n".equal(string))
+				Object temp2 = temp.get("lines");
+				if (temp2 != null && temp2 instanceof Map) {
+					Map temp22 = (Map) temp2;
+					list = (List) temp22.get("line");
 				}
 			}
 
 		}
+		System.out.println(list);
 		return list;
 	}
+	/**
+	 * 获取混拨线路列表
+	 * @param province
+	 * @return
+	 * @throws DocumentException
+	 * @throws UnsupportedEncodingException 
+	 */
+	public static List getLine(String province) throws DocumentException, UnsupportedEncodingException {
+		List list = null;
+		System.out.println("province:" + province);
+		String strUrl = "http://127.0.0.1:8222/hblines/";
+		if(province!=null&&province!=""){
+			strUrl=strUrl+"?province="+URLEncoder.encode(province, "utf-8") ;
+		}
+		String resultXml = RequestUtil.sendGet(strUrl, "utf-8");
+		Map resultMap = XmlUtil.xml2mapWithAttr(resultXml, true);
+		if (resultMap != null && resultMap.get("root") != null) {
+			Map temp = (Map) resultMap.get("root");
+			if (temp != null && temp.size()>0) {
+				System.out.println("结果呢：="+temp+"=");
+				Object temp2 = temp.get("lines");
+				if (temp2 != null && temp2 instanceof Map) {
+					Map temp22 = (Map) temp2;
+					list = (List) temp22.get("line");
+				}
+			}
+
+		}
+		System.out.println(list);
+		return list;
+	}
+	
 	public static Map getMap(String xml) throws DocumentException {
 		Map resultMap = XmlUtil.xml2mapWithAttr(xml, true);
 		return resultMap;
