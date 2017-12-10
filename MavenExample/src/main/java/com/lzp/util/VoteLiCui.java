@@ -105,6 +105,7 @@ public class VoteLiCui {
 					Thread.sleep(300);
 					String stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 //					System.out.println("stateR:" + stateR);
+					
 					int cnn = 0;
 					while (stateR.indexOf("已连接") == -1) {
 						Thread.sleep(300);
