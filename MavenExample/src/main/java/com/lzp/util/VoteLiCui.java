@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -24,6 +25,9 @@ import java.util.Random;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.lang.SystemUtils;
 import org.dom4j.DocumentException;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 
 /**
  * 类名: VoteLiCui
@@ -49,12 +53,16 @@ public class VoteLiCui {
 	private static final int BUFFER_SIZE = 1024;
 	private static String path =  new File(VoteLiCui.class.getResource("/").getPath()).getPath()+File.separatorChar;
 //	private static String path = SystemUtils.getUserDir().getPath()+ File.separatorChar;
-
+	private static int voteIdx=1;
+	private static String SUCCESS="0";
+	private static String CONN_105="105";//开始链接啦
+	private static String CONN_106="106";//已经连接成功了，请断开后再连
 	public static void main(String[] args) {
 		try {
 			String ipstrs = FileUtil.getFileStr(path  + "votelinesip.txt", "gbk");
 			System.out.println(ipstrs);
 			voteTest();
+			System.out.println("结束啦");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -62,7 +70,22 @@ public class VoteLiCui {
 		}
 
 	}
-
+	/**
+	 * 
+	 * @param url 请求链接
+	 * @return 返回map结果集
+	 */
+	@SuppressWarnings("unchecked")
+	public static Map<String,String > sendByGet(String url){
+		String lineinfR = RequestUtil.sendGet(url, "utf-8");
+		Map<String, String> rMap = null;
+		try {
+			rMap = XmlUtil.xml2map(lineinfR, false);
+		} catch (DocumentException e) {
+			rMap=new HashMap<String, String>();
+		}
+		return rMap;
+	}
 	public static void voteTest() throws Exception {
 		int index=0;
 		long startTime=System.currentTimeMillis();
@@ -74,7 +97,7 @@ public class VoteLiCui {
 		// 打码配置信息结束
 
 		// 设置刷票数量
-		int num = 300;
+		int num = 500;
 		// String info = JGetUserInfo(user, pass);
 		// System.out.println("剩余点数:"+info);
 		Random random = new Random();
@@ -82,8 +105,8 @@ public class VoteLiCui {
 		int failnum = 0;
 		String ipstat = "14.153.55.65";
 		List lines = null;
-		int start = -20;
-		int end = 0;
+		int start = 1001;
+		int end = 1021;
 		String linestrs = "";
 		String ipstrs = "";
 		linestrs = FileUtil.getFileStr(path+"votelines2017.txt", "gbk");
@@ -98,43 +121,62 @@ public class VoteLiCui {
 					/*if (linename.indexOf("电信") == -1) {
 						continue;
 					}*/
+					String lineinfoUrl = "http://127.0.0.1:8222/lineinfo/?linename=" + URLEncoder.encode(linename, "utf-8");
+
+					Map<String, String> lineinfR = sendByGet(lineinfoUrl);
+					if(SUCCESS.equals(lineinfR.get("code"))){
+						//一周内未使用过方可使用
+						if("0".equals(lineinfR.get("weekuse"))){
+//							System.out.println("该线路连接信息："+lineinfR);
+							
+						}else {
+							continue;
+						}
+					}else if(CONN_105.equals(lineinfR.get("code"))){
+						System.out.println("105："+lineinfR);
+					}else if(CONN_106.equals(lineinfR.get("code"))){
+						System.out.println("106："+lineinfR);
+					}
+					else{
+						System.out.println("无效线路："+lineinfR);
+						continue;
+					}
 					System.out.println("尝试重新切换ip linename:" + linename);
 					String lineurl = "http://127.0.0.1:8222/connect/?linename=" + URLEncoder.encode(linename, "utf-8") + "&linktype=0";
 					String connectR = RequestUtil.sendGet(lineurl, "utf-8");
-					System.out.println("==="+connectR);
-					Thread.sleep(300);
+//					System.out.println("==="+connectR);
+					Thread.sleep(500);
 					String stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 //					System.out.println("stateR:" + stateR);
 					
 					int cnn = 0;
 					while (stateR.indexOf("已连接") == -1) {
-						Thread.sleep(300);
+						Thread.sleep(500);
 						stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 						cnn++;
 						if (cnn >= 6) {
 							break;
 						}
 					}
-//					if(stateR.indexOf("已连接")>0){
-//						System.out.println("查询状态："+stateR);
-//						index++;
-//						long nowTime = System.currentTimeMillis();
-//						long diffTime=(nowTime-startTime)/1000;
-//						System.out.println("*************投票次数："+index+",耗时："+diffTime+"秒*******************************");
-//						
-//						voteFor327(user, pass, softId);
-//					}
+					if(stateR.indexOf("已连接")>0){
+						System.out.println("查询状态："+stateR);
+						index++;
+						long nowTime = System.currentTimeMillis();
+						long diffTime=(nowTime-startTime)/1000;
+						System.out.println("*****成功票数:"+voteIdx+";投票次数:"+index+",耗时:"+diffTime+"秒*******************************");						
+						voteFor327(user, pass, softId);
+					}
 
 					if (cnn >= 6) {
 						String disconnectR = RequestUtil.sendGet("http://127.0.0.1:8222/disconnect/", "utf-8");
-						System.out.println("断开后等待间隔:" + 300);
-						Thread.sleep(300);
+						System.out.println("断开后等待间隔:" + 500);
+						Thread.sleep(500);
 //						System.out.println("disconnectR:" + disconnectR);
 						stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 //						System.out.println("stateR:" + stateR);
 						int bkn = 0;
 						while (stateR.indexOf("已断开") == -1) {
-							Thread.sleep(300);
+							Thread.sleep(500);
 							stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 							bkn++;
 							if (bkn > 6) {
@@ -149,14 +191,14 @@ public class VoteLiCui {
 					System.out.println("ip:" + ip);
 					if (ip == null || ip.length() == 0) {
 						String disconnectR = RequestUtil.sendGet("http://127.0.0.1:8222/disconnect/", "utf-8");
-						System.out.println("无法获取ip后断开等待间隔:" + 300);
-						Thread.sleep(300);
+						System.out.println("无法获取ip后断开等待间隔:" + 500);
+						Thread.sleep(500);
 //						System.out.println("disconnectR:" + disconnectR);
 						stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 //						System.out.println("stateR:" + stateR);
 						int bkn = 0;
 						while (stateR.indexOf("已断开") == -1) {
-							Thread.sleep(300);
+							Thread.sleep(500);
 							stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 							bkn++;
 							if (bkn > 6) {
@@ -167,8 +209,8 @@ public class VoteLiCui {
 					} else {
 						if (ipstrs.indexOf(ip) != -1) {
 							String disconnectR = RequestUtil.sendGet("http://127.0.0.1:8222/disconnect/", "utf-8");
-							System.out.println("等待间隔:" + 300);
-							Thread.sleep(300);
+							System.out.println("等待间隔:" + 500);
+							Thread.sleep(500);
 							stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 //							System.out.println("stateR:" + stateR);
 							int bkn = 0;
@@ -202,12 +244,12 @@ public class VoteLiCui {
 					index++;
 					 long nowTime = System.currentTimeMillis();
 					 long diffTime = (nowTime-startTime)/1000;
-					System.out.println("*************投票次数："+index+",耗时："+diffTime+"秒*******************************");
+						System.out.println("*****成功票数:"+voteIdx+";投票次数:"+index+",耗时:"+diffTime+"秒*******************************");
 					
 					System.out.println("****************************开始新一轮*******************************\r\n****************************开始新一轮*******************************\r\n" + "****************************开始新一轮*******************************\r\n****************************开始新一轮*******************************\r\n");
 					String disconnectR = RequestUtil.sendGet("http://127.0.0.1:8222/disconnect/", "utf-8");
-					System.out.println("等待间隔:" + 300);
-					Thread.sleep(300);
+					System.out.println("等待间隔:" + 500);
+					Thread.sleep(500);
 //					System.out.println("disconnectR:" + disconnectR);
 					stateR = RequestUtil.sendGet("http://127.0.0.1:8222/getstate/", "utf-8");
 //					System.out.println("stateR:" + stateR);
@@ -275,7 +317,11 @@ public class VoteLiCui {
 			}
 		}
 		System.out.println("-------returnStr:" + returnStr);
-
+		/*String jsonStr = returnStr.substring(returnStr.indexOf("(")+1, returnStr.lastIndexOf(")"));
+		JSONObject json = JSON.parseObject(jsonStr);
+		if("0".equals(String.valueOf(json.get("code")))){
+			voteIdx++;
+		}*/
 		return 0;
 	}
 	/**
